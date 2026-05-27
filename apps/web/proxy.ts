@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_ROUTES } from "./config/routes";
 import { TOKEN_KEY } from "./lib/fetch/config";
+import { locales, defaultLocale, LOCALE_COOKIE } from "@/src/i18n/config";
 
 const API_URL =
   (process.env.NEXT_PUBLIC_API_URL ?? "") +
@@ -20,8 +21,32 @@ async function verifyTokenInRedis(token: string): Promise<boolean> {
   }
 }
 
+function resolveLocale(request: NextRequest): string {
+  // 1. Read from cookie
+  let locale = request.cookies.get(LOCALE_COOKIE)?.value;
+
+  // 2. Fall back to Accept-Language header
+  if (!locale) {
+    const acceptLanguage = request.headers.get("accept-language") || "";
+    const preferred = acceptLanguage.split(",")[0]?.trim()?.slice(0, 5);
+    locale = locales.includes(preferred as (typeof locales)[number])
+      ? preferred
+      : undefined;
+  }
+
+  // 3. Fall back to default
+  if (!locale || !locales.includes(locale as (typeof locales)[number])) {
+    locale = defaultLocale;
+  }
+
+  return locale;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // -- Locale detection (runs for every request) --
+  const locale = resolveLocale(request);
 
   // 1. 检查是否命中白名单
   const isPublicPath = AUTH_ROUTES.publicPaths.some((p) =>
@@ -34,7 +59,9 @@ export async function proxy(request: NextRequest) {
   if (!sessionToken && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.headers.set("x-next-intl-locale", locale);
+    return response;
   }
 
   // 3. 已登录 → 向 Redis 校验 token
@@ -45,18 +72,23 @@ export async function proxy(request: NextRequest) {
       loginUrl.searchParams.set("from", pathname);
       const response = NextResponse.redirect(loginUrl);
       response.cookies.delete(TOKEN_KEY);
+      response.headers.set("x-next-intl-locale", locale);
       return response;
     }
   }
 
   // 4. 已登录用户访问登录页 → 重定向到首页
   if (sessionToken && pathname === "/login") {
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(AUTH_ROUTES.defaultRedirect, request.url)
     );
+    response.headers.set("x-next-intl-locale", locale);
+    return response;
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("x-next-intl-locale", locale);
+  return response;
 }
 
 export const config = {

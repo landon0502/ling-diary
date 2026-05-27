@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/layout";
@@ -14,6 +15,7 @@ export function Wrapper({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const t = useTranslations("layout");
   const router = useRouter();
   const pathname = usePathname();
   const handleTabChange = (tab: string) => {
@@ -32,11 +34,11 @@ export function Wrapper({
   );
 
   const menuItems = [
-    { path: "/home", label: "首页", icon: Home },
-    { path: "/diary", label: "写日记", icon: PenLine },
-    { path: "/history", label: "日记历史", icon: BookOpen },
-    { path: "/analytics", label: "成长分析", icon: BarChart3 },
-    { path: "/settings", label: "设置", icon: Settings },
+    { path: "/home", label: t("home"), icon: Home },
+    { path: "/diary", label: t("writeDiary"), icon: PenLine },
+    { path: "/history", label: t("diaryHistory"), icon: BookOpen },
+    { path: "/analytics", label: t("analytics"), icon: BarChart3 },
+    { path: "/settings", label: t("settings"), icon: Settings },
   ];
 
   return (
@@ -57,7 +59,11 @@ export function Wrapper({
           />
           <SidebarInset>
             <div className="flex-1 flex flex-col overflow-hidden">
-              <Header streak={15} onLogout={doLogout} />
+              <Header
+                streak={15}
+                onLogout={doLogout}
+                onNavigate={() => router.push("/settings")}
+              />
               <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                 {children}
               </main>

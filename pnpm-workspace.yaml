@@ -3,6 +3,7 @@ packages:
   - 'packages/*'
 allowBuilds:
   '@parcel/watcher': true
+  '@swc/core': set this to true or false
   esbuild: true
   msw: set this to true or false
   puppeteer: true

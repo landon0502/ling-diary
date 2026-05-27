@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +11,10 @@ import {
   Globe,
 } from "lucide-react";
 import { useTheme } from "@teispace/next-themes";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
   const { theme, setTheme } = useTheme();
 
   return (
@@ -20,7 +23,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            个人信息
+            {t("personalInfo")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -29,14 +32,14 @@ export default function SettingsPage() {
               <User className="w-8 h-8 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-medium text-foreground">用户昵称</div>
+              <div className="font-medium text-foreground">user@example.com</div>
               <div className="text-sm text-muted-foreground">
                 user@example.com
               </div>
             </div>
           </div>
           <Button variant="outline" size="sm">
-            编辑资料
+            {t("editProfile")}
           </Button>
         </CardContent>
       </Card>
@@ -45,7 +48,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <SettingsIcon className="w-5 h-5" />
-            应用设置
+            {t("appSettings")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -54,10 +57,12 @@ export default function SettingsPage() {
               <Moon className="w-5 h-5 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium text-foreground">
-                  深色模式
+                  {t("darkMode")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  当前主题: {theme === "dark" ? "深色" : "浅色"}
+                  {t("currentTheme", {
+                    theme: theme === "dark" ? t("dark") : t("light"),
+                  })}
                 </div>
               </div>
             </div>
@@ -66,33 +71,37 @@ export default function SettingsPage() {
               size="sm"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              {theme === "dark" ? "切换到浅色" : "切换到深色"}
+              {theme === "dark" ? t("switchToLight") : t("switchToDark")}
             </Button>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Globe className="w-5 h-5 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium text-foreground">语言</div>
-                <div className="text-xs text-muted-foreground">简体中文</div>
+                <div className="text-sm font-medium text-foreground">
+                  {t("language")}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {t("currentLanguage")}
+                </div>
               </div>
             </div>
-            <Button variant="outline" size="sm">
-              更改
-            </Button>
+            <LanguageSwitcher />
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium text-foreground">
-                  每日提醒
+                  {t("dailyReminder")}
                 </div>
-                <div className="text-xs text-muted-foreground">每天 20:00</div>
+                <div className="text-xs text-muted-foreground">
+                  {t("dailyReminderTime")}
+                </div>
               </div>
             </div>
             <Button variant="outline" size="sm">
-              设置
+              {t("setReminder")}
             </Button>
           </div>
         </CardContent>
@@ -100,16 +109,16 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">学习目标</CardTitle>
+          <CardTitle className="text-lg">{t("learningGoal")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
-                每日词数目标
+                {t("dailyWordGoal")}
               </span>
               <span className="text-sm font-medium text-foreground">
-                150 词
+                150 words
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -119,10 +128,10 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
-                每周日记目标
+                {t("weeklyDiaryGoal")}
               </span>
               <span className="text-sm font-medium text-foreground">
-                5 / 7 篇
+                5 / 7
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">

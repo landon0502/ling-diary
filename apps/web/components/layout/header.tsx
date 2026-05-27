@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Bell, User, Flame, LogOut, Settings, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchDiary } from "@/components/search-diary";
@@ -25,6 +26,8 @@ export function Header({
   onLogout,
   onNavigate,
 }: HeaderProps) {
+  const t = useTranslations("layout");
+
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 relative z-20">
       {/* Search */}
@@ -40,7 +43,7 @@ export function Header({
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/10 border border-warning/20">
           <Flame className="w-4 h-4 text-warning" />
           <span className="text-sm font-medium text-warning">
-            {streak} 天连续
+            {t("streakDays", { count: streak })}
           </span>
         </div>
 
@@ -64,7 +67,7 @@ export function Header({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">用户昵称</p>
+              <p className="text-sm font-medium">{t("userNickname")}</p>
               <p className="text-xs text-muted-foreground">user@example.com</p>
             </div>
             <DropdownMenuSeparator />
@@ -73,14 +76,14 @@ export function Header({
               className="cursor-pointer"
             >
               <UserCircle className="w-4 h-4 mr-2" />
-              个人资料
+              {t("profile")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onNavigate?.("settings")}
               className="cursor-pointer"
             >
               <Settings className="w-4 h-4 mr-2" />
-              设置
+              {t("settings")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -88,7 +91,7 @@ export function Header({
               className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              退出登录
+              {t("logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

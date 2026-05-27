@@ -6,6 +6,7 @@ import {
   getCurrentUser,
   verifyToken,
   type LoginParams,
+  type RegisterParams,
 } from "@/services/auth";
 import { tokenManager } from "@/lib/fetch";
 
@@ -22,7 +23,7 @@ interface AuthState {
   error: string | null;
 
   login: (params: LoginParams) => Promise<void>;
-  register: (params: LoginParams) => Promise<void>;
+  register: (params: RegisterParams) => Promise<void>;
   logout: () => Promise<void>;
   /** 向 Redis 验证 token 是否有效 */
   validateToken: () => Promise<boolean>;

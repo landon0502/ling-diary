@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,8 @@ export function AppSidebar({
   onTabChange,
   menus = [],
 }: SidebarProps) {
+  const t = useTranslations("common");
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex items-center flex-row gap-3 h-16 px-3 border-b border-sidebar-border">
@@ -36,8 +39,8 @@ export function AppSidebar({
           <Sparkles className="size-5 text-primary-foreground" />
         </div>
         <div className="flex flex-col group-data-[state=collapsed]:hidden min-w-0">
-          <span className="font-bold text-lg truncate">LingDiary</span>
-          <span className="text-xs text-muted-foreground">AI 英文日记</span>
+          <span className="font-bold text-lg truncate">{t("appName")}</span>
+          <span className="text-xs text-muted-foreground">{t("tagline")}</span>
         </div>
       </SidebarHeader>
 

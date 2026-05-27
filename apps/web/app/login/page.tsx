@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRequest } from "ahooks";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ const REMEMBER_KEY = "ling-diary-remember";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations("auth");
   const mounted = useMounted();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState(() => {
@@ -88,15 +90,14 @@ export default function LoginPage() {
   const error = (reqError as { message?: string })?.message || null;
 
   const features = [
-    { icon: PenLine, title: "每日英文日记", desc: "养成写作习惯" },
-    { icon: Brain, title: "AI 智能评分", desc: "即时反馈指导" },
-    { icon: Sparkles, title: "语法纠错", desc: "精准定位错误" },
-    { icon: TrendingUp, title: "成长分析", desc: "可视化进步" },
+    { icon: PenLine, tKey: "featureDailyDiary", descKey: "featureDailyDiaryDesc" },
+    { icon: Brain, tKey: "featureAiScore", descKey: "featureAiScoreDesc" },
+    { icon: Sparkles, tKey: "featureGrammar", descKey: "featureGrammarDesc" },
+    { icon: TrendingUp, tKey: "featureGrowth", descKey: "featureGrowthDesc" },
   ];
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* 主题切换按钮 */}
       {mounted && <ThemeButton />}
       {/* 左侧品牌展示区 */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden">
@@ -141,15 +142,14 @@ export default function LoginPage() {
 
           {/* 标题 */}
           <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
-            用 AI 赋能你的
+            {t("heroTitle1")}
             <br />
             <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
-              英语写作之旅
+              {t("heroTitle2")}
             </span>
           </h1>
           <p className="text-lg text-muted-foreground mb-12 max-w-md">
-            每天写一篇英文日记，让 AI
-            成为你的私人写作导师，见证你的英语能力稳步提升
+            {t("heroDesc")}
           </p>
 
           {/* 功能亮点 */}
@@ -165,10 +165,10 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <div className="font-medium text-foreground text-sm">
-                    {feature.title}
+                    {t(feature.tKey)}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {feature.desc}
+                    {t(feature.descKey)}
                   </div>
                 </div>
               </div>
@@ -179,17 +179,17 @@ export default function LoginPage() {
           <div className="mt-12 flex items-center gap-8">
             <div>
               <div className="text-2xl font-bold text-foreground">50,000+</div>
-              <div className="text-sm text-muted-foreground">活跃用户</div>
+              <div className="text-sm text-muted-foreground">{t("activeUsers")}</div>
             </div>
             <div className="w-px h-10 bg-border" />
             <div>
               <div className="text-2xl font-bold text-foreground">2M+</div>
-              <div className="text-sm text-muted-foreground">日记篇数</div>
+              <div className="text-sm text-muted-foreground">{t("diaryCount")}</div>
             </div>
             <div className="w-px h-10 bg-border" />
             <div>
               <div className="text-2xl font-bold text-foreground">4.9</div>
-              <div className="text-sm text-muted-foreground">用户评分</div>
+              <div className="text-sm text-muted-foreground">{t("userRating")}</div>
             </div>
           </div>
         </div>
@@ -214,23 +214,23 @@ export default function LoginPage() {
           {/* 标题 */}
           <div className="text-center lg:text-left mb-8">
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              欢迎回来
+              {t("welcomeBack")}
             </h2>
-            <p className="text-muted-foreground">登录以继续你的英语学习之旅</p>
+            <p className="text-muted-foreground">{t("loginSubtitle")}</p>
           </div>
 
           {/* 登录表单 */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
-                账号
+                {t("username")}
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="输入用户名或邮箱地址"
+                  placeholder={t("usernamePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-10 h-12 bg-input border-border focus:border-primary focus:ring-primary/20"
@@ -241,14 +241,14 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                密码
+                {t("password")}
               </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="输入密码"
+                  placeholder={t("passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-12 bg-input border-border focus:border-primary focus:ring-primary/20"
@@ -279,14 +279,14 @@ export default function LoginPage() {
                   htmlFor="remember"
                   className="text-sm text-muted-foreground cursor-pointer"
                 >
-                  记住我
+                  {t("rememberMe")}
                 </Label>
               </div>
               <button
                 type="button"
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
-                忘记密码？
+                {t("forgotPassword")}
               </button>
             </div>
 
@@ -296,8 +296,10 @@ export default function LoginPage() {
                 htmlFor="terms"
                 className="text-sm text-muted-foreground cursor-pointer"
               >
-                我已阅读并同意 <span className="text-primary">服务条款</span> 和{" "}
-                <span className="text-primary">隐私政策</span>
+                {t("termsPrefix")}{" "}
+                <span className="text-primary">{t("termsOfService")}</span>{" "}
+                {t("termsAnd")}{" "}
+                <span className="text-primary">{t("privacyPolicy")}</span>
               </Label>
             </div>
 
@@ -318,11 +320,11 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    处理中...
+                    {t("processing")}
                   </>
                 ) : (
                   <>
-                    登录
+                    {t("login")}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -337,27 +339,27 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-background text-muted-foreground">
-                或使用以下方式登录
+                {t("orLoginWith")}
               </span>
             </div>
           </div>
 
           {/* 切换登录/注册 */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            还没有账户？
+            {t("noAccount")}
             <button
               type="button"
               className="ml-1 text-primary hover:text-primary/80 font-medium transition-colors"
               onClick={() => router.push("/register")}
             >
-              立即注册
+              {t("register")}
             </button>
           </p>
 
           {/* 安全提示 */}
           <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <CheckCircle2 className="w-4 h-4 text-success" />
-            <span>数据加密传输，安全可靠</span>
+            <span>{t("secureHint")}</span>
           </div>
         </div>
       </div>

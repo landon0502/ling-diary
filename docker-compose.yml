@@ -1,13 +1,12 @@
 services:
+  # web:
+  #   build: ./apps/web
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - api
 
-  web:
-    build: ./apps/web
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-
-  api:
+  api-go:
     build: ./apps/api-go
     ports:
       - "8080:8080"
@@ -15,27 +14,31 @@ services:
       - mysql
       - redis
 
-  ai-service:
-    build: ./apps/ai-service
-    ports:
-      - "8000:8000"
-    depends_on:
-      - redis
+  # ai-service:
+  #   build: ./apps/ai-service
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - redis
 
   mysql:
-    image: mysql:8
+    image: mysql:8.0
+    restart: always
+    command: --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: lingdiary
-    volumes:
-      - mysql-data:/var/lib/mysql
+      MYSQL_ROOT_PASSWORD: "00000000"
+      MYSQL_DATABASE: ling_diary
+      TZ: Asia/Shanghai
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
   redis:
-    image: redis:7
+    image: redis:latest
     ports:
       - "6379:6379"
 
 volumes:
-  mysql-data:
+  mysql_data:

@@ -1,0 +1,22 @@
+# 应用配置
+environment: development
+server:
+  port: "8081"
+
+# 数据库配置
+database:
+  host: localhost
+  port: "3306"
+  user: root
+  password: "00000000"
+  name: ling_diary
+
+# JWT配置
+jwt:
+  secret: your-secret-key-change-this-in-production
+  expire: 24 # 过期时间（小时）
+
+# redis 配置
+redis:
+  addr: "localhost:6379"
+  password: "00000000"

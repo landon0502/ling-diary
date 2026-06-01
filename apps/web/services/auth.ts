@@ -14,7 +14,7 @@ export interface LoginResponse {
   user: {
     id: string;
     email: string;
-    name: string;
+    username: string;
   };
 }
 
@@ -49,7 +49,7 @@ export const refreshTokenApi = (refreshToken: string) => {
 
 // 获取当前用户信息
 export const getCurrentUser = () => {
-  return fetchClient.get<unknown>("/users/info");
+  return fetchClient.get("/users/info");
 };
 
 // 校验token
@@ -65,7 +65,7 @@ export interface UpdateUserParams {
 
 // 更新用户信息
 export const updateUser = (data: UpdateUserParams) => {
-  return fetchClient.put("/user/me", data);
+  return fetchClient.put("/user/info", data);
 };
 
 // 修改密码

@@ -1,7 +1,12 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { LOCALE_COOKIE, localeLabels, locales, type Locale } from "@/src/i18n/config";
+import {
+  LOCALE_COOKIE,
+  localeLabels,
+  locales,
+  type Locale,
+} from "@/src/i18n/config";
 import Cookies from "js-cookie";
 import { Globe } from "lucide-react";
 import {
@@ -23,9 +28,9 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost">
           <Globe className="w-5 h-5 text-muted-foreground" />
-          <span className="sr-only">{localeLabels[locale]}</span>
+          <span>{localeLabels[locale]}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">

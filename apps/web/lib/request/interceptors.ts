@@ -29,38 +29,22 @@ import { RequestError, ErrorType } from "./types";
 
 // Token 管理
 export const tokenManager = {
-  // 获取 token
   getToken(): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(TOKEN_KEY);
   },
 
-  // 设置 token
   setToken(token: string): void {
     if (typeof window === "undefined") return;
     localStorage.setItem(TOKEN_KEY, token);
   },
 
-  // // 获取 refresh token
-  // getRefreshToken(): string | null {
-  //   if (typeof window === "undefined") return null;
-  //   return localStorage.getItem(REFRESH_TOKEN_KEY);
-  // },
-
-  // // 设置 refresh token
-  // setRefreshToken(token: string): void {
-  //   if (typeof window === "undefined") return;
-  //   localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  // },
-
-  // 清除 token
   clearToken(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   },
 
-  // 检查是否已登录
   isAuthenticated(): boolean {
     return !!this.getToken();
   },

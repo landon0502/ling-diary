@@ -35,7 +35,7 @@ type UpdateUserRequest struct {
 
 // UserResponse 用户响应
 type UserResponse struct {
-	ID        uint               `json:"id"`
+	ID        int64              `json:"id,string"`
 	Username  string             `json:"username"`
 	Email     string             `json:"email"`
 	CreatedAt pkgtime.CustomTime `json:"created_at"`
@@ -163,7 +163,7 @@ func (s *UserService) Login(req *LoginRequest) (*LoginResponse, error) {
 	}
 
 	// 生成 JWT token
-	jwtToken, err := utils.GenerateJWT(user.ID, user.Username, 7*24)
+	jwtToken, err := utils.GenerateJWT(uint(user.ID), user.Username, 7*24)
 	if err != nil {
 		return nil, err
 	}

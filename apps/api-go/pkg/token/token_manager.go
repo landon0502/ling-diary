@@ -15,7 +15,7 @@ const (
 )
 
 // StoreTokenWithUserMapping 存储 token 并建立双向映射
-func StoreTokenWithUserMapping(token string, userID uint) error {
+func StoreTokenWithUserMapping(token string, userID int64) error {
 	ctx := context.Background()
 
 	// 1. Token -> User ID

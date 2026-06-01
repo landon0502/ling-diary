@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	utils "ling-diary/pkg/utils"
+	token_pkg "ling-diary/pkg/token"
 	"net/http"
 	"strings"
 
@@ -26,15 +26,15 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
-		// 验证JWT token
-		claims, err := utils.ValidateJWT(tokenString)
+		// 从Redis中校验token并获取user_id
+		userID, err := token_pkg.VerifyTokenWithUserMapping(tokenString)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token expired"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
 			c.Abort()
 			return
 		}
-		// 将用户ID存入上下文
-		c.Set("user_id", claims.UserID)
+
+		c.Set("user_id", userID)
 
 		c.Next()
 	}

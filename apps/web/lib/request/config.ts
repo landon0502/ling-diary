@@ -1,8 +1,8 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
 // Token 存储键名
-export const TOKEN_KEY = 'auth_token';
-export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const TOKEN_KEY = "auth_token";
+export const REFRESH_TOKEN_KEY = "refresh_token";
 
 // HTTP 状态码映射
 export const HTTP_STATUS = {
@@ -26,7 +26,7 @@ export const DEFAULT_CONFIG = {
   baseURL: BASE_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   maxRetry: 2,
   retryDelay: 1000,
@@ -34,10 +34,10 @@ export const DEFAULT_CONFIG = {
 
 // 权限码
 export const PERMISSION_CODE = {
-  LOGIN: 'user:login',
-  LOGOUT: 'user:logout',
-  READ: 'data:read',
-  WRITE: 'data:write',
-  DELETE: 'data:delete',
-  ADMIN: 'admin:*',
+  LOGIN: "user:login",
+  LOGOUT: "user:logout",
+  READ: "data:read",
+  WRITE: "data:write",
+  DELETE: "data:delete",
+  ADMIN: "admin:*",
 } as const;

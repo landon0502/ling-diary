@@ -1,15 +1,26 @@
 package models
 
-import "time"
+import (
+	"ling-diary/pkg/idnode"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // User 用户模型
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
+	ID        int64     `json:"id,string" gorm:"primaryKey;autoIncrement:false;type:varchar(64)"`
 	Username  string    `json:"username" gorm:"unique;not null"`
 	Email     string    `json:"email" gorm:"unique;not null"`
 	Password  string    `json:"-" gorm:"not null"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) {
+	if u.ID == 0 {
+		u.ID = idnode.GenerateInt64()
+	}
 }
 
 // UserCreate 用户创建请求

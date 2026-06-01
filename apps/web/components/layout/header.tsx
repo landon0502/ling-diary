@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuthStore } from "@/stores";
 
 interface HeaderProps {
   streak: number;
@@ -27,7 +28,7 @@ export function Header({
   onNavigate,
 }: HeaderProps) {
   const t = useTranslations("layout");
-
+  const user = useAuthStore((s) => s.user);
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 relative z-20">
       {/* Search */}
@@ -67,8 +68,8 @@ export function Header({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">{t("userNickname")}</p>
-              <p className="text-xs text-muted-foreground">user@example.com</p>
+              <p className="text-sm font-medium">{user?.username}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem

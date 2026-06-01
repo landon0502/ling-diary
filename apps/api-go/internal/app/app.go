@@ -83,10 +83,20 @@ func (a *App) registerRoutes() {
 		userGroup := v1.Group("/users")
 		userGroup.Use(middleware.Auth())
 		{
+			userGroup.GET("/info", userHandler.GetUserInfo)
 			userGroup.GET("/:id", userHandler.Get)
 			userGroup.PUT("/:id", userHandler.Update)
 			userGroup.DELETE("/:id", userHandler.Delete)
-			userGroup.DELETE("/info", userHandler.GetUserInfo)
+		}
+
+		// ai配置
+		aiHandler := a.container.GetAiHandler()
+		aiGroup := v1.Group("/ai")
+		aiGroup.Use(middleware.Auth())
+		{
+			aiGroup.GET("/platforms", aiHandler.GetAiPlatforms)
+			aiGroup.POST("/saveConfig", aiHandler.SetUserAiConf)
+			aiGroup.GET("/userAiConf", aiHandler.GetUserAiConf)
 		}
 	}
 }

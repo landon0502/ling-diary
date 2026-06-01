@@ -31,6 +31,7 @@ func Init(dbConfig config.DatabaseConfig) error {
 	err = DB.AutoMigrate(
 		// 添加需要迁移的模型
 		&models.User{},
+		&models.UserAiConfig{},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)

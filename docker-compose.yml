@@ -14,12 +14,12 @@ services:
       - mysql
       - redis
 
-  # ai-service:
-  #   build: ./apps/ai-service
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - redis
+  ai-service:
+    build: ./apps/ai-service
+    depends_on:
+      - redis
+    networks:
+      - internal
 
   mysql:
     image: mysql:8.0

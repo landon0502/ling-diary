@@ -13,7 +13,7 @@ import { tokenManager } from "@/lib/fetch";
 interface User {
   id: string;
   email: string;
-  name: string;
+  username: string;
 }
 
 interface AuthState {
@@ -45,9 +45,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           const res = await loginApi(params);
           const token = res.data?.token?.replace(/^Bearer\s+/, "") ?? "";
-          const refreshToken = res.data?.refreshToken?.replace(/^Bearer\s+/, "") ?? "";
+          const refreshToken =
+            res.data?.refreshToken?.replace(/^Bearer\s+/, "") ?? "";
           tokenManager.setToken(token, params.remember);
-          if (refreshToken) tokenManager.setRefreshToken(refreshToken, params.remember);
+          if (refreshToken)
+            tokenManager.setRefreshToken(refreshToken, params.remember);
           if (res.data?.user) {
             set({
               user: res.data.user,

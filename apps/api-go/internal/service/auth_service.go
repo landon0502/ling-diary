@@ -13,7 +13,7 @@ func NewAuthService(userService *UserService) *AuthService {
 }
 
 // StoreToken 存储token到Redis（使用双向映射）
-func (auth *AuthService) StoreToken(token string, userID uint) error {
+func (auth *AuthService) StoreToken(token string, userID int64) error {
 	return tok.StoreTokenWithUserMapping(token, userID)
 }
 

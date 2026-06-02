@@ -1,11 +1,31 @@
-import { FetchClient } from "@ling-diary/fetch-client";
+import { FetchClient, FetchError } from "@ling-diary/fetch-client";
 import { tokenManager } from "./token-manager";
 import { TOKEN_KEY, APP_CONFIG } from "./config";
+import { getBusinessErrorType } from "./types";
 import { toast } from "sonner";
-// 默认实例（客户端），注入 token 提供者
+
+// 默认实例（客户端），通过请求拦截器注入 token
 const fetchClient = new FetchClient({
   baseURL: APP_CONFIG.baseURL,
-  tokenProvider: () => tokenManager.getToken(),
+});
+
+fetchClient.useRequestInterceptor((ctx) => {
+  const token = tokenManager.getToken();
+  if (token) {
+    ctx.config.headers = {
+      ...ctx.config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return ctx;
+});
+
+// 业务错误码 → ErrorType 映射
+fetchClient.useResponseErrorInterceptor((error) => {
+  if (error instanceof FetchError && error.code) {
+    error.type = getBusinessErrorType(error.code);
+  }
+  return error;
 });
 
 fetchClient.useResponseErrorInterceptor((err) => {
@@ -53,10 +73,11 @@ export default fetchClient;
 export async function createServerClient(): Promise<FetchClient> {
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
+  const token = cookieStore.get(TOKEN_KEY)?.value ?? null;
 
-  return new FetchClient({
-    baseURL: APP_CONFIG.baseURL,
-    serverSide: true,
-    tokenProvider: () => cookieStore.get(TOKEN_KEY)?.value ?? null,
-  });
+  const client = new FetchClient({ baseURL: APP_CONFIG.baseURL });
+  if (token) {
+    client.setDefaultHeader("Authorization", `Bearer ${token}`);
+  }
+  return client;
 }

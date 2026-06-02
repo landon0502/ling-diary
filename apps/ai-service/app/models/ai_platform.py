@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from dataclasses import dataclass
 from app.db.database import Base
 
 
@@ -34,6 +34,8 @@ class AIModel(Base):
 
     platform: Mapped["AIPlatform"] = relationship(back_populates="models")
 
+
+@dataclass
 class AiModelConf:
     """用户提供的 AI 配置（非数据库表，仅作请求参数载体）"""
     provider: str

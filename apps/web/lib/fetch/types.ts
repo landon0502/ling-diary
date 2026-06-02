@@ -10,8 +10,40 @@ export {
   type RequestInterceptor,
   type ResponseInterceptor,
   type ResponseErrorInterceptor,
-  type TokenProvider,
 } from "@ling-diary/fetch-client";
+
+import { ErrorType } from "@ling-diary/fetch-client";
+
+/** 业务错误码 → ErrorType 映射，替换 packages 中的通用 getErrorType */
+export function getBusinessErrorType(code: number): ErrorType {
+  if (code === 0) return ErrorType.UnknownError;
+
+  if (code >= 10001 && code <= 10006) {
+    if (code === 10005) return ErrorType.RateLimitError;
+    if (code >= 10001 && code <= 10003) return ErrorType.ValidationError;
+    return ErrorType.ServerError;
+  }
+
+  if (code >= 20001 && code <= 20006) {
+    if (code === 20002) return ErrorType.TokenExpired;
+    if (code === 20004) return ErrorType.TokenReplaced;
+    if (code === 20005) return ErrorType.PermissionError;
+    if (code === 20006) return ErrorType.AccountFrozen;
+    return ErrorType.AuthError;
+  }
+
+  if (code >= 30001 && code <= 30005) return ErrorType.ValidationError;
+
+  if (code >= 40001 && code <= 40004) {
+    if (code === 40001) return ErrorType.NotFoundError;
+    if (code === 40003) return ErrorType.ConflictError;
+    return ErrorType.ServerError;
+  }
+
+  if (code >= 50001 && code <= 50004) return ErrorType.ServerError;
+
+  return ErrorType.UnknownError;
+}
 
 // 业务错误码（ling-diary 项目专属）
 export const ErrorCode = {

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useAuthStore } from "@/stores";
-import fetchClient from "@/lib/fetch";
+import fetchClient, { FetchError } from "@/lib/fetch";
 import { setupErrorToast } from "@/lib/fetch/error-toast";
 
 interface AuthGuardProps {
@@ -24,7 +24,7 @@ export function AuthGuard({ children, onUnauthorized }: AuthGuardProps) {
     return unregister;
   }, []);
 
-  // 注册全局 401 处理：任何 API 返回 401 都会触发登出
+  // 注册全局 401 处理：通过响应错误拦截器捕获 401 并触发登出
   useEffect(() => {
     const handleUnauthorized = () => {
       useAuthStore.getState().logout();
@@ -35,11 +35,14 @@ export function AuthGuard({ children, onUnauthorized }: AuthGuardProps) {
       }
     };
 
-    fetchClient.setUnauthorizedCallback(handleUnauthorized);
+    const unregister = fetchClient.useResponseErrorInterceptor((error) => {
+      if (error instanceof FetchError && error.status === 401) {
+        handleUnauthorized();
+      }
+      return error;
+    });
 
-    return () => {
-      fetchClient.setUnauthorizedCallback(() => {});
-    };
+    return unregister;
   }, [router, onUnauthorized]);
 
   // 没有 token（middleware 已兜底，这里是二次保障）

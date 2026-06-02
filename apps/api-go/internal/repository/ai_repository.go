@@ -25,7 +25,7 @@ func (ai *AiRepository) GetPlatformsTree() ([]models.AiPlatforms, error) {
 	return aiPlatforms, nil
 }
 
-func (ai *AiRepository) GetUserAiConfig(userID int64) (*models.UserAiConfig, error) {
+func (ai *AiRepository) GetUserAiConfig(userID uint) (*models.UserAiConfig, error) {
 	var conf models.UserAiConfig
 	err := ai.db.Where("user_id = ?", userID).First(&conf).Error
 	if err != nil {

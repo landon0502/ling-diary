@@ -12,7 +12,6 @@ import {
   type RequestInterceptor,
   type ResponseErrorInterceptor,
   type ResponseInterceptor,
-  type TokenProvider,
   type UploadProgress,
 } from "./types";
 
@@ -50,23 +49,12 @@ export class FetchClient {
   private baseURL: string;
   private defaultConfig: FetchRequestConfig;
   private interceptors = new InterceptorManager();
-  private onUnauthorized: (() => void) | null = null;
-  private tokenProvider: TokenProvider;
-  private serverSide: boolean;
 
   private pendingMap = new Map<string, Promise<unknown>>();
 
   constructor(options?: FetchClientOptions) {
     this.baseURL = options?.baseURL ?? DEFAULT_CONFIG.baseURL;
     this.defaultConfig = { ...DEFAULT_CONFIG, ...options };
-    this.tokenProvider = options?.tokenProvider ?? (() => null);
-    this.serverSide = options?.serverSide ?? false;
-  }
-
-  // ==================== Token ====================
-
-  private async resolveToken(): Promise<string | null> {
-    return this.tokenProvider();
   }
 
   // ==================== 拦截器注册 ====================
@@ -89,10 +77,6 @@ export class FetchClient {
 
   setBaseURL(url: string): void {
     this.baseURL = url;
-  }
-
-  setUnauthorizedCallback(cb: () => void): void {
-    this.onUnauthorized = cb;
   }
 
   setDefaultHeader(key: string, value: string): void {
@@ -182,11 +166,6 @@ export class FetchClient {
   ): Promise<ApiResponse<T>> {
     const headers = new Headers(config.headers);
 
-    if (!config.skipAuth) {
-      const token = await this.resolveToken();
-      if (token) headers.set("Authorization", `Bearer ${token}`);
-    }
-
     let processedBody: BodyInit | undefined;
     if (body !== undefined && body !== null) {
       if (body instanceof FormData) {
@@ -247,72 +226,34 @@ export class FetchClient {
 
     response = await this.interceptors.runResponse(response, ctx);
 
-    // 401 → 通知外部处理
-    if (
-      response.status === HTTP_STATUS.UNAUTHORIZED &&
-      !config.skipAuth &&
-      !this.serverSide
-    ) {
-      this.onUnauthorized?.();
-      throw new FetchError("登录已过期，请重新登录", ErrorType.AuthError, {
-        status: response.status,
-      });
-    }
-
-    if (!response.ok) await this._handleHttpError(response, config);
+    if (!response.ok) await this._handleHttpError(response);
     return this._parseResponse<T>(response, config);
   }
 
   // ==================== HTTP 错误处理 ====================
 
   private async _handleHttpError(
-    response: Response,
-    config: FetchRequestConfig
+    response: Response
   ): Promise<never> {
     const { status } = response;
-    let body: unknown;
-    try {
-      body = await response.clone().json();
-    } catch {
-      /* ignore */
-    }
 
-    if (status === HTTP_STATUS.UNAUTHORIZED && !config.skipAuth) {
-      if (!this.serverSide) this.onUnauthorized?.();
-      throw new FetchError("登录已过期，请重新登录", ErrorType.AuthError, {
-        status,
-      });
+    if (status === HTTP_STATUS.UNAUTHORIZED) {
+      throw new FetchError("未授权", ErrorType.AuthError, { status });
     }
     if (status === HTTP_STATUS.FORBIDDEN) {
-      throw new FetchError("没有权限访问该资源", ErrorType.PermissionError, {
-        status,
-      });
+      throw new FetchError("禁止访问", ErrorType.PermissionError, { status });
     }
     if (status === HTTP_STATUS.NOT_FOUND) {
-      throw new FetchError("请求的资源不存在", ErrorType.NotFoundError, {
-        status,
-      });
+      throw new FetchError("资源不存在", ErrorType.NotFoundError, { status });
     }
     if (status === HTTP_STATUS.TOO_MANY_REQUESTS) {
-      throw new FetchError(
-        "请求过于频繁，请稍后再试",
-        ErrorType.RateLimitError,
-        { status }
-      );
+      throw new FetchError("请求过频", ErrorType.RateLimitError, { status });
     }
     if (status >= 500) {
-      throw new FetchError("服务器错误，请稍后再试", ErrorType.ServerError, {
-        status,
-      });
+      throw new FetchError("服务器错误", ErrorType.ServerError, { status });
     }
 
-    const message = (body as Record<string, unknown>)?.message as
-      | string
-      | undefined;
-    throw new FetchError(message || "请求失败", ErrorType.UnknownError, {
-      status,
-      response: body,
-    });
+    throw new FetchError("请求失败", ErrorType.UnknownError, { status });
   }
 
   // ==================== 响应解析 ====================
@@ -413,16 +354,11 @@ export class FetchClient {
     onProgress: (progress: UploadProgress) => void,
     config?: FetchRequestConfig
   ): Promise<ApiResponse<T>> {
-    const authToken = !config?.skipAuth ? await this.resolveToken() : null;
-
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const fullURL = buildURL(this.baseURL, url);
       xhr.open("POST", fullURL);
       xhr.timeout = config?.timeout ?? DEFAULT_CONFIG.timeout;
-
-      if (authToken)
-        xhr.setRequestHeader("Authorization", `Bearer ${authToken}`);
 
       if (config?.headers) {
         Object.entries(config.headers).forEach(([key, value]) => {
@@ -464,9 +400,8 @@ export class FetchClient {
             });
           }
         } else if (xhr.status === HTTP_STATUS.UNAUTHORIZED) {
-          this.onUnauthorized?.();
           reject(
-            new FetchError("登录已过期", ErrorType.AuthError, {
+            new FetchError("未授权", ErrorType.AuthError, {
               status: xhr.status,
             })
           );
@@ -524,11 +459,6 @@ export class FetchClient {
     const controller = new AbortController();
     const fullURL = buildURL(this.baseURL, url, config?.params);
     const headers = new Headers(config?.headers);
-
-    if (!config?.skipAuth) {
-      const token = await this.resolveToken();
-      if (token) headers.set("Authorization", `Bearer ${token}`);
-    }
 
     const response = await fetch(fullURL, {
       headers,

@@ -39,7 +39,7 @@ func (ai *AiHandler) GetUserAiConf(c *gin.Context) {
 		return
 	}
 
-	conf, err := ai.aiService.GetUserAiConfig(int64(uid))
+	conf, err := ai.aiService.GetUserAiConfig(uid)
 	if err != nil {
 		response.Success(c, nil)
 		return
@@ -77,16 +77,21 @@ func (ai *AiHandler) SetUserAiConf(c *gin.Context) {
 
 func (ai *AiHandler) AiAnalyze(c *gin.Context) {
 	userID, exists := c.Get("user_id")
+	var req service.AiMsgRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ParamError(c)
+		return
+	}
 	if !exists {
 		response.NoAuthToken(c)
 		return
 	}
-	uid, ok := userID.(int64)
+	uid, ok := userID.(uint)
 	if !ok {
 		response.ParamFormatError(c)
 		return
 	}
-	res, err := ai.aiService.DiaryAiAnalyze(uid)
+	res, err := ai.aiService.DiaryAiAnalyze(uid, req)
 	if err != nil {
 		response.InternalServerError(c)
 		return

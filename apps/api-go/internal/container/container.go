@@ -9,36 +9,42 @@ import (
 
 // Container 管理所有的依赖
 type Container struct {
-	userService *service.UserService
-	authService *service.AuthService
-	aiService   *service.AiService
-	userHandler *handler.UserHandler
-	authHandler *handler.AuthHandler
-	aiHandler   *handler.AiHandler
-	aiRepo      *repository.AiRepository
+	userService  *service.UserService
+	authService  *service.AuthService
+	aiService    *service.AiService
+	userHandler  *handler.UserHandler
+	authHandler  *handler.AuthHandler
+	aiHandler    *handler.AiHandler
+	aiRepo       *repository.AiRepository
+	diaryRepo    *repository.DiaryRepository
+	diaryHandler *handler.DiaryHandler
 }
 
 // NewContainer 创建新的依赖容器
 func NewContainer() *Container {
 	// 初始化 Repository
 	aiRepo := repository.NewAiRepository(database.GetDB())
+	diaryRepo := repository.NewDiaryRepository(database.GetDB())
 
 	// 初始化 Service
 	userService := service.NewUserService()
 	authService := service.NewAuthService(userService)
 	aiService := service.NewAiService(aiRepo)
+	diaryService := service.NewDiaryService(diaryRepo)
 
 	// 初始化 Handler
 	userHandler := handler.NewUserHandler(userService)
 	authHandler := handler.NewAuthHandler(userService, authService)
 	aiHandler := handler.NewAiHandler(aiService)
+	diaryHandler := handler.NewDiaryHandler(diaryService)
 	return &Container{
-		userService: userService,
-		authService: authService,
-		userHandler: userHandler,
-		authHandler: authHandler,
-		aiHandler:   aiHandler,
-		aiRepo:      aiRepo,
+		userService:  userService,
+		authService:  authService,
+		userHandler:  userHandler,
+		authHandler:  authHandler,
+		aiHandler:    aiHandler,
+		aiRepo:       aiRepo,
+		diaryHandler: diaryHandler,
 	}
 }
 
@@ -65,4 +71,9 @@ func (c *Container) GetAuthHandler() *handler.AuthHandler {
 // GetAiHandler 获取ai处理器
 func (c *Container) GetAiHandler() *handler.AiHandler {
 	return c.aiHandler
+}
+
+// GetDiaryHandler 获取日记处理器
+func (c *Container) GetDiaryHandler() *handler.DiaryHandler {
+	return c.diaryHandler
 }

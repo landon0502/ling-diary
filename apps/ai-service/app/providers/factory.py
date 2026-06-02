@@ -7,8 +7,6 @@ from app.models.ai_platform import AiModelConf
 from app.providers.common import CommonProviders
 # 注册表 —— name → Provider 类
 _registry: dict[str, type[BaseProvider]] = {}
-
-
 class ProviderFactory:
 
     @staticmethod

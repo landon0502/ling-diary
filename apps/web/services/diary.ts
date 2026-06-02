@@ -1,7 +1,10 @@
 // ==================== 日记相关 ====================
 import fetchClient from "@/lib/fetch";
 export interface CreateDiaryParams {
+  id?: string;
+  title: string;
   content: string;
+  isAnalyze: 0 | 1;
 }
 
 export interface DiaryItem {
@@ -25,7 +28,10 @@ export interface DiaryListResponse {
 
 // 创建日记
 export const createDiary = (data: CreateDiaryParams) => {
-  return fetchClient.post<{ id: number; status: string }>("/diaries", data);
+  return fetchClient.post<{ id: number; status: 0 | 1; message: string }>(
+    "/diary/",
+    data
+  );
 };
 
 // 获取日记列表

@@ -19,8 +19,9 @@ class BaseProvider(ABC):
     """
 
     name: str = ""
-    default_model: str = ""
-
+    model: str = ""
+    auth_url: str = ""
+    api_key: str = ""
     # ===== 公开方法 =====
 
     def stream_chat(
@@ -43,12 +44,11 @@ class BaseProvider(ABC):
     async def chat(
         self,
         messages: list[ChatMessage],
-        model: str | None = None,
         **kwargs,
     ) -> ChatResponse:
         """非流式对话 —— 返回完整 ChatResponse"""
         try:
-            return await self._generate(messages, model, **kwargs)
+            return await self._generate(messages, **kwargs)
         except Exception as e:
             raise e
 
@@ -58,7 +58,6 @@ class BaseProvider(ABC):
     async def _generate_stream(
         self,
         messages: list[ChatMessage],
-        model: str | None,
         **kwargs,
     ) -> AsyncGenerator[dict, None]:
         """流式生成 —— 逐 chunk yield {"data": "文本"} 和 {"event": "done", "data": ""}"""
@@ -68,7 +67,6 @@ class BaseProvider(ABC):
     async def _generate(
         self,
         messages: list[ChatMessage],
-        model: str | None,
         **kwargs,
     ) -> ChatResponse:
         """非流式生成 —— 等待完整响应后返回"""

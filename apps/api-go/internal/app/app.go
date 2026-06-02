@@ -97,6 +97,19 @@ func (a *App) registerRoutes() {
 			aiGroup.GET("/platforms", aiHandler.GetAiPlatforms)
 			aiGroup.POST("/saveConfig", aiHandler.SetUserAiConf)
 			aiGroup.GET("/userAiConf", aiHandler.GetUserAiConf)
+			aiGroup.POST("/analyze", aiHandler.AiAnalyze)
+		}
+
+		// 用户diary
+		diaryHandler := a.container.GetDiaryHandler()
+		diaryGroup := v1.Group("/diary")
+		diaryGroup.Use(middleware.Auth())
+		{
+			diaryGroup.GET("/", diaryHandler.GetDiarys)
+			diaryGroup.GET("/:id", diaryHandler.GetDiaryById)
+			diaryGroup.POST("/", diaryHandler.CreateDiary)
+			diaryGroup.DELETE("/:id", diaryHandler.DelDiaryById)
+			diaryGroup.PUT("/:id", diaryHandler.UpdateDiaryById)
 		}
 	}
 }

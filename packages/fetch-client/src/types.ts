@@ -16,7 +16,6 @@ export interface FetchRequestConfig {
   headers?: Record<string, string>;
   retry?: number;
   retryDelay?: number | ((attempt: number) => number);
-  skipAuth?: boolean;
   skipErrorHandler?: boolean;
   responseType?: "json" | "text" | "blob" | "arrayBuffer";
   signal?: AbortSignal;
@@ -65,35 +64,10 @@ export class FetchError extends Error {
   }
 }
 
-/** 根据业务错误码映射 ErrorType，业务方可覆盖此逻辑 */
+/** 通用错误码映射，业务方可通过拦截器替换为自定义逻辑 */
 export function getErrorType(code: number): ErrorType {
   if (code === 0) return ErrorType.UnknownError;
-
-  if (code >= 10001 && code <= 10006) {
-    if (code === 10005) return ErrorType.RateLimitError;
-    if (code >= 10001 && code <= 10003) return ErrorType.ValidationError;
-    return ErrorType.ServerError;
-  }
-
-  if (code >= 20001 && code <= 20006) {
-    if (code === 20002) return ErrorType.TokenExpired;
-    if (code === 20004) return ErrorType.TokenReplaced;
-    if (code === 20005) return ErrorType.PermissionError;
-    if (code === 20006) return ErrorType.AccountFrozen;
-    return ErrorType.AuthError;
-  }
-
-  if (code >= 30001 && code <= 30005) return ErrorType.ValidationError;
-
-  if (code >= 40001 && code <= 40004) {
-    if (code === 40001) return ErrorType.NotFoundError;
-    if (code === 40003) return ErrorType.ConflictError;
-    return ErrorType.ServerError;
-  }
-
-  if (code >= 50001 && code <= 50004) return ErrorType.ServerError;
-
-  return ErrorType.UnknownError;
+  return ErrorType.ServerError;
 }
 
 // ==================== 拦截器 ====================
@@ -127,11 +101,4 @@ export interface UploadProgress {
   percent: number;
 }
 
-// ==================== Token 提供者 ====================
-
-export type TokenProvider = () => string | null | Promise<string | null>;
-
-export interface FetchClientOptions extends FetchRequestConfig {
-  tokenProvider?: TokenProvider;
-  serverSide?: boolean;
-}
+export interface FetchClientOptions extends FetchRequestConfig {}

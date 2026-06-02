@@ -12,17 +12,8 @@ def get_prompt(content: str) -> str:
     prompt = f"""
     你是一位专业英语老师。
     请分析以下英文作文。
-    必须返回 JSON
     必须中文回答
     禁止 markdown
-    返回 JSON 格式：
-    {{
-        "score": 0,
-        "grammar_errors": [{{error_type: "语法|拼写|风格|...", error_tag: "动词时态错误", error_desc: "主语是第一人称 I，过去式应该用 went 而不是 goes", error_word: "I goes to", correct_word: "I went to"}}],
-        "overall_comment": "",
-        "idea":["改进意见",...],
-        "ai_idea":"AI 改写建议，直接返回改写后的内容，不要加入其他说明词"
-    }}
     作文：
     {content}
     """
@@ -52,13 +43,13 @@ def stream_chat(
     )
 
 
-async def chat(
+async def ai_analyze(
     messages: list[dict],
     config: AiModelConf,
     **kwargs,
 ) -> ChatResponse:
     """非流式对话 —— 返回完整响应"""
-    provider = ProviderFactory.create('common')
+    provider = ProviderFactory.create('common', config)
     return await provider.chat(
         messages=_to_chat_messages(messages),
         model=config.model,

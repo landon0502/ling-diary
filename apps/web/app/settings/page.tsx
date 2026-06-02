@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "@teispace/next-themes";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { ShineBorder } from "@/components/ui/shine-border";
 import { type AIPlatform } from "@/config/ai-platforms";
 import useService from "./useServices";
 import { useAuthStore } from "@/stores/auth-store";
@@ -45,6 +44,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { MagicCard } from "@/components/ui/magic-card";
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const themeT = useTranslations("theme");
@@ -84,7 +84,7 @@ export default function SettingsPage() {
   }, [platformsControl.data]);
 
   const platform = useMemo<AIPlatform | undefined>(
-    () => platforms.find((p) => p.name === selectedPlatform),
+    () => platforms.find((p) => p.label === selectedPlatform),
     [selectedPlatform, platforms]
   );
 
@@ -100,11 +100,11 @@ export default function SettingsPage() {
   // 1. 重置模型选择（不同平台的模型列表不同）
   // 2. 非自定义平台自动填充 auth_url，自定义平台清空
   // shouldDirty: true 确保表单感知变更，底部按钮会随之出现
-  const handlePlatformChange = (name: string) => {
-    setValue("platform", name, { shouldDirty: true });
+  const handlePlatformChange = (label: string) => {
+    setValue("platform", label, { shouldDirty: true });
     setValue("model", "", { shouldDirty: true });
-    const p = platforms.find((p) => p.name === name);
-    if (p && name !== "custom") {
+    const p = platforms.find((p) => p.label === label);
+    if (p) {
       setValue("auth_url", p.auth_url, { shouldDirty: true });
     } else {
       setValue("auth_url", "", { shouldDirty: true });
@@ -228,246 +228,254 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      <MagicCard
+        mode="orb"
+        glowFrom={theme === "dark" ? "#ee4f27" : "#E9D5FF"}
+        glowTo={theme === "dark" ? "#6b21ef" : "#FBCFE8"}
+        className="p-0 overflow-hidden rounded rounded-xl"
+      >
+        <Card className="relative w-full overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              {t("aiConfigs")}
+            </CardTitle>
+          </CardHeader>
 
-      <Card className="relative w-full overflow-hidden">
-        <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5" />
-            {t("aiConfigs")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form
-            id="form-ai-config"
-            onSubmit={onConfirm}
-            className="flex flex-col gap-3"
-          >
-            {/* 平台名称 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Boxes className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">
-                    {t("platformName")}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t("platformNameHint")}
+          <CardContent className="space-y-4">
+            <form
+              id="form-ai-config"
+              onSubmit={onConfirm}
+              className="flex flex-col gap-3"
+            >
+              {/* 平台名称 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Boxes className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium text-foreground">
+                      {t("platformName")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("platformNameHint")}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="w-72">
-                <Controller
-                  name="platform"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <InputGroup className="[--radius:1rem]">
-                        <InputGroupInput
-                          placeholder="请输入AI平台"
-                          value={field.value}
-                          onChange={(value) =>
-                            setValue("platform", value.target.value, {
-                              shouldDirty: true,
-                            })
-                          }
-                        />
-                        <InputGroupAddon align="inline-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <InputGroupButton
-                                variant="ghost"
-                                className="pr-1.5! text-xs"
+                <div className="w-72">
+                  <Controller
+                    name="platform"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <InputGroup className="[--radius:1rem]">
+                          <InputGroupInput
+                            placeholder="请输入AI平台"
+                            value={field.value}
+                            onChange={(value) =>
+                              setValue("platform", value.target.value, {
+                                shouldDirty: true,
+                              })
+                            }
+                          />
+                          <InputGroupAddon align="inline-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <InputGroupButton
+                                  variant="ghost"
+                                  className="pr-1.5! text-xs"
+                                >
+                                  <MoreHorizontal />
+                                </InputGroupButton>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="[--radius:0.95rem]"
                               >
-                                <MoreHorizontal />
-                              </InputGroupButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="[--radius:0.95rem]"
-                            >
-                              <DropdownMenuGroup>
-                                {platforms.map((p) => (
-                                  <DropdownMenuItem
-                                    key={p.name}
-                                    onClick={() => handlePlatformChange(p.name)}
-                                  >
-                                    {p.label}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </Field>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* 模型 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bot className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">
-                    {t("model")}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t("modelHint")}
-                  </div>
+                                <DropdownMenuGroup>
+                                  {platforms.map((p) => (
+                                    <DropdownMenuItem
+                                      key={p.label}
+                                      onClick={() =>
+                                        handlePlatformChange(p.label)
+                                      }
+                                    >
+                                      {p.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </Field>
+                    )}
+                  />
                 </div>
               </div>
-              <div className="w-72">
-                <Controller
-                  name="model"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <InputGroup className="[--radius:1rem]">
-                        <InputGroupInput
-                          placeholder="请输入模型名称"
-                          value={field.value}
-                          onChange={(value) =>
-                            setValue("model", value.target.value, {
-                              shouldDirty: true,
-                            })
-                          }
-                        />
-                        <InputGroupAddon align="inline-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <InputGroupButton
-                                variant="ghost"
-                                className="pr-1.5! text-xs"
+
+              {/* 模型 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Bot className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium text-foreground">
+                      {t("model")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("modelHint")}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-72">
+                  <Controller
+                    name="model"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <InputGroup className="[--radius:1rem]">
+                          <InputGroupInput
+                            placeholder="请输入模型名称"
+                            value={field.value}
+                            onChange={(value) =>
+                              setValue("model", value.target.value, {
+                                shouldDirty: true,
+                              })
+                            }
+                          />
+                          <InputGroupAddon align="inline-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <InputGroupButton
+                                  variant="ghost"
+                                  className="pr-1.5! text-xs"
+                                >
+                                  <MoreHorizontal />
+                                </InputGroupButton>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="[--radius:0.95rem]"
                               >
-                                <MoreHorizontal />
-                              </InputGroupButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="[--radius:0.95rem]"
-                            >
-                              <DropdownMenuGroup>
-                                {platform?.models.map((p) => (
-                                  <DropdownMenuItem
-                                    key={p.value}
-                                    onClick={() => handleModelChange(p.value)}
-                                  >
-                                    {p.label}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </Field>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* API KEY */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <UserKey className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">
-                    API KEY
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t("apiKeyHint")}
-                  </div>
+                                <DropdownMenuGroup>
+                                  {platform?.models.map((p) => (
+                                    <DropdownMenuItem
+                                      key={p.value}
+                                      onClick={() => handleModelChange(p.value)}
+                                    >
+                                      {p.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </Field>
+                    )}
+                  />
                 </div>
               </div>
-              <div className="w-72">
-                <Controller
-                  name="api_key"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <Input
-                        {...register("api_key")}
-                        value={field.value}
-                        type="password"
-                        placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        className="w-full h-8 bg-input border-border focus:border-primary focus:ring-primary/20"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-            </div>
 
-            {/* 认证 URL */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <LinkIcon className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">
-                    {t("authUrl")}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t("authUrlHint")}
+              {/* API KEY */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <UserKey className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium text-foreground">
+                      API KEY
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("apiKeyHint")}
+                    </div>
                   </div>
                 </div>
+                <div className="w-72">
+                  <Controller
+                    name="api_key"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <Input
+                          {...register("api_key")}
+                          value={field.value}
+                          type="password"
+                          placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          className="w-full h-8 bg-input border-border focus:border-primary focus:ring-primary/20"
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </div>
               </div>
-              <div className="w-72">
-                <Controller
-                  name="auth_url"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <Input
-                        {...register("auth_url")}
-                        value={field.value}
-                        type="text"
-                        placeholder="https://api..."
-                        className="w-full h-8 bg-input border-border focus:border-primary focus:ring-primary/20"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-            </div>
 
-            {/* 确认 / 取消 */}
-            {isDirty && (
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onCancel}
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  {t("cancel") || "取消"}
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={saveConfigControl.loading}
-                >
-                  {saveConfigControl.loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="w-4 h-4 mr-1" />
-                  )}
-                  {t("confirm") || "确认"}
-                </Button>
+              {/* 认证 URL */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <LinkIcon className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium text-foreground">
+                      {t("authUrl")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("authUrlHint")}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-72">
+                  <Controller
+                    name="auth_url"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <Input
+                          {...register("auth_url")}
+                          value={field.value}
+                          type="text"
+                          placeholder="https://api..."
+                          className="w-full h-8 bg-input border-border focus:border-primary focus:ring-primary/20"
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </div>
               </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
+
+              {/* 确认 / 取消 */}
+              {isDirty && (
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onCancel}
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    {t("cancel") || "取消"}
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={saveConfigControl.loading}
+                  >
+                    {saveConfigControl.loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4 mr-1" />
+                    )}
+                    {t("confirm") || "确认"}
+                  </Button>
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </MagicCard>
     </div>
   );
 }

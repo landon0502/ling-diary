@@ -14,5 +14,4 @@ export {
   type RequestInterceptor,
   type ResponseInterceptor,
   type ResponseErrorInterceptor,
-  type TokenProvider,
 } from "./types";

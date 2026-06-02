@@ -31,9 +31,3 @@ type UserAiConfig struct {
 	ApiKey   string `json:"api_key" grom:"api_key"`
 	UserId   int64  `json:"user_id" grom:"user_id"`
 }
-
-type AiAnalyzeResp struct {
-	Content string `json:"content"`
-	Model   string `json:"model"`
-	Usage   any    `json:"usage"`
-}

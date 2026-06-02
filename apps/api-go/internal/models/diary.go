@@ -4,7 +4,7 @@ import "time"
 
 // Diary 日记模型
 type Diary struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
+	ID        uint      `json:"id,string" gorm:"primaryKey"`
 	Title     string    `json:"title" gorm:"not null"`
 	Content   string    `json:"content" gorm:"type:text"`
 	UserID    uint      `json:"user_id" gorm:"not null"`

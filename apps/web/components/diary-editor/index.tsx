@@ -42,7 +42,7 @@ export function DiaryEditor({ onSubmit, loading }: DiaryEditorProps) {
       }),
       CharacterCount.configure(),
     ],
-    content: diaryCache.content ?? "",
+    content: diaryCache.contentJSON,
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
     onUpdate({ editor }) {

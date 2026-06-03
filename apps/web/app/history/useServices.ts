@@ -5,7 +5,7 @@ export default function useServices() {
   const diariesControl = useRequest(getDiaryList, { manual: true });
   const { data } = diariesControl;
   const diaries = useMemo(() => data?.data?.list ?? [], [data]);
-  const total = useMemo(() => data?.data.total, [data]);
+  const total = useMemo(() => data?.data.total ?? 0, [data]);
 
   return {
     diariesControl,

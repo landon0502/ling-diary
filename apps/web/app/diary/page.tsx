@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { DiaryEditor, type DiaryData } from "./components";
+import { DiaryEditor, type DiaryData } from "@/components/diary-editor";
 import useServices from "./useServices";
 export default function DiaryPage() {
   const { createDiaryControl } = useServices();

@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Calendar, ChevronRight, Star, Search, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import useServices from "../useServices";
 import { useMounted } from "@/hooks";
-import type { DiaryItem } from "@/services/diary";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Pagination } from "@/components/pagination";
-// ==================== 类型定义 ====================
 
 // ==================== 常量 ====================
 
 const PAGE_SIZE = 10;
-
-// ==================== 工具函数 ====================
 
 // ==================== 样式工具 ====================
 
@@ -38,28 +34,35 @@ export function DiaryHistory({
 }: DiaryHistoryProps) {
   // ---- 本地状态 ----
   const [filterQuery, setFilterQuery] = useState("");
-
-  // 分页相关状态
-
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ---- Refs ----
-  const loadingRef = useRef(false); // 防重复加载
+  const loadingRef = useRef(false);
   const isFirstMount = useRef(true);
 
   // ---- Hooks ----
   const mounted = useMounted();
   const { diariesControl, diaries, total } = useServices();
   const { runAsync: getList, loading } = diariesControl;
+
+  // 总页数
+  const totalPages = useMemo(
+    () => Math.ceil((total ?? 0) / PAGE_SIZE),
+    [total]
+  );
+
+  // 是否为首次加载 / 筛选加载中（列表为空且正在请求）
+  const isInitialLoading = diaries.length === 0 && loading;
+
   // ---- 核心方法：加载数据 ----
   const loadDiaries = useCallback(
-    async (currentPage: number, keyword: string) => {
+    async (page: number, keyword: string) => {
       if (loadingRef.current) return;
       loadingRef.current = true;
 
       try {
         await getList({
-          page: currentPage,
+          page,
           page_size: PAGE_SIZE,
           keyword: keyword || undefined,
         });
@@ -75,12 +78,37 @@ export function DiaryHistory({
     if (!mounted) return;
 
     loadDiaries(1, "").finally(() => {
-      setIsInitialLoading(false);
       isFirstMount.current = false;
     });
     // 仅在挂载时执行一次
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
+
+  // ---- 副作用：关键字筛选变更 ----
+  useEffect(() => {
+    if (isFirstMount.current || !mounted) return;
+
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      loadDiaries(1, filterQuery);
+    }, 300); // 300ms 防抖
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterQuery]);
+
+  // ---- 副作用：页码变更 ----
+  useEffect(() => {
+    if (isFirstMount.current || !mounted) return;
+
+    loadDiaries(currentPage, filterQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // ---- 分页回调 ----
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   // ---- 渲染 ----
   return (
@@ -110,8 +138,8 @@ export function DiaryHistory({
       {/* ========== 列表区域 ========== */}
       <CardContent className="flex-1 overflow-y-auto relative overflow-hidden p-0">
         <div className="absolute top-0 bottom-0 w-full">
-          <ScrollArea className=" h-full w-full px-4 ">
-            {/* 首次加载中 */}
+          <ScrollArea className="h-full w-full px-4">
+            {/* 首次加载 / 筛选加载中 */}
             {isInitialLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -171,6 +199,13 @@ export function DiaryHistory({
                     </div>
                   </div>
                 ))}
+
+                {/* 加载更多指示 */}
+                {loading && !isInitialLoading && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </div>
             ) : (
               /* 空状态 */
@@ -186,7 +221,17 @@ export function DiaryHistory({
           </ScrollArea>
         </div>
       </CardContent>
-      <Pagination />
+
+      {/* ========== 分页 ========== */}
+      {totalPages > 0 && (
+        <div className="py-3 border-t border-border">
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            onChange={handlePageChange}
+          />
+        </div>
+      )}
     </Card>
   );
 }

@@ -22,7 +22,9 @@ def get_prompt(content: str) -> str:
 
 def _to_chat_messages(messages: list[dict]) -> list[ChatMessage]:
     """将前端传来的 dict 消息转为 ChatMessage，并对 user 消息注入批改 prompt"""
-    result: list[ChatMessage] = []
+    result: list[ChatMessage] = [
+        ChatMessage(role="system", content="你是一个专业的英语专家")
+    ]
     for m in messages:
         content = get_prompt(m["content"]) if m["role"] == "user" else m["content"]
         result.append(ChatMessage(role=m["role"], content=content))

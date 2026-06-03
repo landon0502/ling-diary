@@ -6,13 +6,15 @@ import { AppSidebar } from "@/components/layout";
 import { Header } from "@/components/layout";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { BookOpen, PenLine, BarChart3, Settings, Home } from "lucide-react";
+import { BookOpen, PenLine, Settings, Home } from "lucide-react";
 import { useAuthStore } from "@/stores";
 import { useRequest } from "ahooks";
 
 export function Wrapper({
+  padding = true,
   children,
 }: Readonly<{
+  padding?: boolean;
   children: React.ReactNode;
 }>) {
   const t = useTranslations("layout");
@@ -37,7 +39,6 @@ export function Wrapper({
     { path: "/home", label: t("home"), icon: Home },
     { path: "/diary", label: t("writeDiary"), icon: PenLine },
     { path: "/history", label: t("diaryHistory"), icon: BookOpen },
-    { path: "/analytics", label: t("analytics"), icon: BarChart3 },
     { path: "/settings", label: t("settings"), icon: Settings },
   ];
 
@@ -64,7 +65,11 @@ export function Wrapper({
                 onLogout={doLogout}
                 onNavigate={() => router.push("/settings")}
               />
-              <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+              <main
+                className={`flex-1 overflow-y-auto ${
+                  padding ? "p-2 lg:p-4" : ""
+                }`}
+              >
                 {children}
               </main>
             </div>

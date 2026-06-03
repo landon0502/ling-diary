@@ -2,9 +2,7 @@
 对话相关数据模型。
 """
 from typing import Any, Literal
-
 from pydantic import BaseModel
-
 
 class ChatMessage(BaseModel):
     """对话消息"""

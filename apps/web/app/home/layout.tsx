@@ -8,7 +8,7 @@ export default function HomeLayout({
 }>) {
   return (
     <AuthGuard>
-      <LayoutWrapper>{children}</LayoutWrapper>
+      <LayoutWrapper padding>{children}</LayoutWrapper>
     </AuthGuard>
   );
 }

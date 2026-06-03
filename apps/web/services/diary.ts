@@ -4,19 +4,24 @@ export interface CreateDiaryParams {
   id?: string;
   title: string;
   content: string;
+  contentJSON: string;
   isAnalyze: 0 | 1;
 }
 
 export interface DiaryItem {
   id: number;
+  title: string;
   content: string;
+  contentJSON: string;
   word_count: number;
   score?: number;
   status: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface DiaryListParams {
+  keyword?: string;
   page?: number;
   page_size?: number;
 }
@@ -37,7 +42,7 @@ export const createDiary = (data: CreateDiaryParams) => {
 // 获取日记列表
 export const getDiaryList = (params?: DiaryListParams) => {
   return fetchClient.get<DiaryListResponse>(
-    "/diaries",
+    "/diary/",
     params as Record<string, unknown>
   );
 };

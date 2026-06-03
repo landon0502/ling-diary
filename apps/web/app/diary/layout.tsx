@@ -8,7 +8,7 @@ export default function DiaryLayout({
 }>) {
   return (
     <AuthGuard>
-      <LayoutWrapper>{children}</LayoutWrapper>
+      <LayoutWrapper padding={false}>{children}</LayoutWrapper>
     </AuthGuard>
   );
 }

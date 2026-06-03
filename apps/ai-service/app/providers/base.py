@@ -24,7 +24,7 @@ class BaseProvider(ABC):
     api_key: str = ""
     # ===== 公开方法 =====
 
-    def stream_chat(
+    async def stream_chat(
         self,
         messages: list[ChatMessage],
         model: str | None = None,

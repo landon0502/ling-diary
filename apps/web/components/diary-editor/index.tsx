@@ -12,8 +12,9 @@ import { CircleCheck } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import MenusBar from "./MenusBar";
-import "./index.scss";
+import { AiMessage } from "./extensions/AiMessage";
 import { toast } from "sonner";
+import "./index.scss";
 
 export interface DiaryData {
   content?: string;
@@ -37,6 +38,7 @@ export function DiaryEditor({ onSubmit, loading }: DiaryEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
+      AiMessage,
       Placeholder.configure({
         placeholder: "Write your diary here...",
       }),
@@ -73,6 +75,15 @@ export function DiaryEditor({ onSubmit, loading }: DiaryEditorProps) {
     });
   }, [editor, onSubmit, diaryCache.title, setDiaryCache]);
 
+  const handleAskAi = () => {
+    if (!editor) return;
+    // 1. 在当前光标处插入一个空的 AI 消息节点
+    editor.commands.insertContent({
+      type: "aiMessage",
+      attrs: { content: "..." },
+    });
+  };
+
   if (!editor) return null;
 
   return (
@@ -80,21 +91,26 @@ export function DiaryEditor({ onSubmit, loading }: DiaryEditorProps) {
       <TooltipProvider>
         <div className="flex items-center justify-between gap-1 bg-muted/40 p-1 box-border">
           <MenusBar editor={editor} />
-          <ShimmerButton onClick={handleSubmit} className="shadow-2xl">
-            <span className="relative z-10 flex items-center justify-center gap-2 text-center text-sm leading-none font-medium tracking-tight whitespace-pre-wrap text-white  dark:from-white dark:to-slate-900/10">
-              {loading ? (
-                <>
-                  提交中
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                </>
-              ) : (
-                <>
-                  提交
-                  <CircleCheck className="w-4 h-4 group-hover:scale-125 transition-transform" />
-                </>
-              )}
-            </span>
-          </ShimmerButton>
+          <div className="flex gap-2">
+            <ShimmerButton onClick={handleAskAi} className="shadow-2xl">
+              ai
+            </ShimmerButton>
+            <ShimmerButton onClick={handleSubmit} className="shadow-2xl">
+              <span className="relative z-10 flex items-center justify-center gap-2 text-center text-sm leading-none font-medium tracking-tight whitespace-pre-wrap text-white  dark:from-white dark:to-slate-900/10">
+                {loading ? (
+                  <>
+                    提交中
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    提交
+                    <CircleCheck className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                  </>
+                )}
+              </span>
+            </ShimmerButton>
+          </div>
         </div>
       </TooltipProvider>
       <div className="flex-1 relative">

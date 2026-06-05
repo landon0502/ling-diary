@@ -7,4 +7,4 @@ httpx==0.28.1
 sqlalchemy[asyncio]==2.0.44
 asyncmy==0.2.10
 redis[hiredis]==7.1.0
-sse-starlette==2.3.0
+sse-starlette==2.3.2

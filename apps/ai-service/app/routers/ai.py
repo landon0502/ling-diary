@@ -1,6 +1,7 @@
 """
 AI 对话路由 —— 流式 + 非流式对话接口。
 """
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -21,19 +22,24 @@ class ChatRequest(BaseModel):
 
 # ==== 流式 ====
 
+
 @router.post("/chat/stream")
 async def chat_stream(body: ChatRequest):
     """
     流式对话 —— 返回 SSE 事件流，前端通过 EventSource 逐字展示。
     """
-    return ai_service.stream_chat(
-        provider_name=body.provider,
-        messages=body.messages,
+
+    config = AiModelConf(
+        provider=body.platform,
         model=body.model,
+        auth_url=body.auth_url,
+        api_key=body.api_key,
     )
+    return await ai_service.stream_chat(messages=body.messages, config=config)
 
 
 # ==== 非流式 ====
+
 
 @router.post("/analyze")
 async def chat(body: ChatRequest):
@@ -45,11 +51,8 @@ async def chat(body: ChatRequest):
         provider=body.platform,
         model=body.model,
         auth_url=body.auth_url,
-        api_key=body.api_key
+        api_key=body.api_key,
     )
-    
-    result = await ai_service.ai_analyze(
-        messages=body.messages,
-        config=config
-    )
+
+    result = await ai_service.ai_analyze(messages=body.messages, config=config)
     return success(data=result.model_dump())

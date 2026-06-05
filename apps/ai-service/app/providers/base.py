@@ -34,7 +34,7 @@ class BaseProvider(ABC):
 
         async def event_generator() -> AsyncGenerator[dict, None]:
             try:
-                async for chunk in self._generate_stream(messages, model, **kwargs):
+                async for chunk in self._generate_stream(messages, **kwargs):
                     yield chunk
             except Exception as e:
                 yield {"event": "error", "data": str(e)}

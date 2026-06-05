@@ -98,6 +98,7 @@ func (a *App) registerRoutes() {
 			aiGroup.POST("/saveConfig", aiHandler.SetUserAiConf)
 			aiGroup.GET("/userAiConf", aiHandler.GetUserAiConf)
 			aiGroup.POST("/analyze", aiHandler.AiAnalyze)
+			aiGroup.POST("/chat", aiHandler.AiChatStream)
 		}
 
 		// 用户diary

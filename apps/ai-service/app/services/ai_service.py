@@ -31,14 +31,14 @@ def _to_chat_messages(messages: list[dict]) -> list[ChatMessage]:
     return result
 
 
-def stream_chat(
+async def stream_chat(
     messages: list[dict],
    config: AiModelConf,
     **kwargs,
 ) -> EventSourceResponse:
     """流式对话 —— 返回 SSE 事件流"""
-    provider = ProviderFactory.create("common")
-    return provider.stream_chat(
+    provider = ProviderFactory.create("common", config=config)
+    return await provider.stream_chat(
         messages=_to_chat_messages(messages),
         model=config.model,
         **kwargs,

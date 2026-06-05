@@ -1,14 +1,16 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"ling-diary/internal/models"
 	"ling-diary/internal/repository"
 	"net/http"
 	"strings"
+	"time"
 
-	"encoding/json"
+	redis_pkg "ling-diary/pkg/redis"
 )
 
 type AiService struct {
@@ -60,8 +62,32 @@ func (ai *AiService) SaveUserAiConfig(conf models.UserAiConfig) error {
 	return ai.aiRepo.SaveUserAiConfig(&conf)
 }
 
+// CacheUserAiConfig 将用户 AI 配置缓存到 Redis
+func (ai *AiService) CacheUserAiConfig(userID int64, conf *models.UserAiConfig) error {
+	key := fmt.Sprintf("user_ai_config:%d", userID)
+	data, err := json.Marshal(conf)
+	if err != nil {
+		return err
+	}
+	return redis_pkg.GetRedisDB().Set(redis_pkg.Ctx, key, data, 24*time.Hour).Err()
+}
+
+// GetCacheUserAiConfig 从 Redis 读取用户 AI 配置
+func (ai *AiService) GetCacheUserAiConfig(userID uint) (*models.UserAiConfig, error) {
+	key := fmt.Sprintf("user_ai_config:%d", userID)
+	data, err := redis_pkg.GetRedisDB().Get(redis_pkg.Ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+	var conf models.UserAiConfig
+	if err := json.Unmarshal([]byte(data), &conf); err != nil {
+		return nil, err
+	}
+	return &conf, nil
+}
+
 func (ai *AiService) DiaryAiAnalyze(userId uint, messages AiMsgRequest) (aiAnalyzeResp *AiAnalyzeResp, err error) {
-	aiModelConfig, err := ai.aiRepo.GetUserAiConfig(userId)
+	aiModelConfig, err := ai.GetCacheUserAiConfig(userId)
 	if err != nil {
 		return nil, err
 	}

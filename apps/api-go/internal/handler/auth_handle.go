@@ -10,12 +10,14 @@ import (
 type AuthHandler struct {
 	userService *service.UserService
 	authService *service.AuthService
+	aiService   *service.AiService
 }
 
-func NewAuthHandler(userService *service.UserService, authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(userService *service.UserService, authService *service.AuthService, aiService *service.AiService) *AuthHandler {
 	return &AuthHandler{
 		userService: userService,
 		authService: authService,
+		aiService:   aiService,
 	}
 }
 
@@ -38,6 +40,11 @@ func (auth *AuthHandler) Login(c *gin.Context) {
 	if err := auth.authService.StoreToken(res.Token, res.User.ID); err != nil {
 		response.InternalServerError(c)
 		return
+	}
+
+	// 缓存用户 AI 配置到 Redis
+	if aiConf, err := auth.aiService.GetUserAiConfig(uint(res.User.ID)); err == nil {
+		_ = auth.aiService.CacheUserAiConfig(res.User.ID, aiConf)
 	}
 
 	response.Success(c, res)

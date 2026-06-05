@@ -1,5 +1,5 @@
 from app.providers.base import BaseProvider
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from typing import List
 from app.models import ChatMessage, ChatResponse
 from app.models.ai_platform import AiModelConf
@@ -76,6 +76,7 @@ def parse_essay_result(response):
 
     raise Exception("模型未返回tool调用")
 
+
 class CommonProviders(BaseProvider):
 
     def __init__(self, config: AiModelConf):
@@ -87,36 +88,65 @@ class CommonProviders(BaseProvider):
             api_key=config.api_key,
             base_url=config.auth_url,
         )
+        self._async_client = AsyncOpenAI(
+            api_key=config.api_key,
+            base_url=config.auth_url,
+        )
+
     async def _generate_stream(self, messages: List[ChatMessage], **kwargs):
-        response = self._client.chat.completions.create(
-            model=self.model, 
-            messages = [message.model_dump() for message in messages],
+        # 1. 💡 核心清洗：剔除前端传来的多余字段，只留下大模型要求的标准字段
+        cleaned_messages = [
+            {"role": msg.role, "content": msg.content} for msg in messages
+        ]
+
+        # 2. 💡 修正致命错误：必须在前面加上 await 激活异步流对象
+        response = await self._async_client.chat.completions.create(
+            model=self.model,
+            messages=cleaned_messages,  # 💡 使用清洗后的干净参数
             stream=True,
             reasoning_effort=kwargs.get("reasoning_effort", "high"),
             top_p=0.8,
-            temperature=0.2
+            temperature=0.2,
         )
-        for chunk in response:
+
+        # 3. 💡 修正运行错误：遍历异步流必须使用 async for
+        async for chunk in response:
+            if not chunk.choices:
+                continue
+
             delta = chunk.choices[0].delta
-            if delta.content:
-                yield {"data": delta.content}
-        yield {"data":""}
+            content = ""
+            reasoning_content = ""
+
+            # 💡 进阶定制：完美兼容深度思考模型（如 o1, o3-mini, DeepSeek-R1）
+            if hasattr(delta, "reasoning_content") and delta.reasoning_content:
+                reasoning_content = delta.reasoning_content
+            elif hasattr(delta, "content") and delta.content:
+                content = delta.content
+
+            # 4. 💡 定制核心：格式化为包含结构化数据的标准 SSE 字符串
+            if content or reasoning_content:
+                payload = {
+                    "data": content,
+                    "reasoning": reasoning_content,  # 留作后续前端实现“思考折叠面板”的高级扩展
+                }
+
+                # 用 json.dumps 转换为标准字符串，并严格拼装 data: 前缀与双换行
+                yield f"{json.dumps(payload, ensure_ascii=False)}\n\n"
+
+        # 5. 💡 定制流结束标识：向全链路（Go/Next.js）传递标准 DONE 信号
+        yield "[DONE]\n\n"
 
     async def _generate(self, messages, **kwargs):
-        response = self._client.chat.completions.create(
-            model=self.model, 
-            messages = [message.model_dump() for message in messages], 
+        response = await self._client.chat.completions.create(
+            model=self.model,
+            messages=[message.model_dump() for message in messages],
             stream=False,
             reasoning_effort=kwargs.get("reasoning_effort", "low"),
             top_p=0.8,
             temperature=0.2,
             tools=tools,
-            tool_choice={
-                "type":"function",
-                "function":{
-                    "name":"essay_analyze"
-                }
-            },
+            tool_choice={"type": "function", "function": {"name": "essay_analyze"}},
         )
         data = parse_essay_result(response)
         return ChatResponse(
@@ -124,4 +154,3 @@ class CommonProviders(BaseProvider):
             model=response.model,
             usage=response.usage.model_dump() if response.usage else None,
         )
-

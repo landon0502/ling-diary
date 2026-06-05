@@ -34,7 +34,7 @@ func NewContainer() *Container {
 
 	// 初始化 Handler
 	userHandler := handler.NewUserHandler(userService)
-	authHandler := handler.NewAuthHandler(userService, authService)
+	authHandler := handler.NewAuthHandler(userService, authService, aiService)
 	aiHandler := handler.NewAiHandler(aiService)
 	diaryHandler := handler.NewDiaryHandler(diaryService)
 	return &Container{

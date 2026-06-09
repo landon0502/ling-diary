@@ -79,14 +79,14 @@ async function* parseGoSSEStream(
 }
 
 export async function POST(req: NextRequest) {
-  const { messages, systemContent } = await req.json();
+  const { messages, systemContent, systemTitle } = await req.json();
 
   const cleanedMessages = cleanMessages(messages);
   // 3. 💡 注入灵魂：如果带有日记内容，在数组第一项强行注入上下文环境
   if (systemContent) {
     cleanedMessages.unshift({
-      role: "system", // 或者作为第一条隐形 user 消息
-      content: `以下是用户刚刚写完的日记内容。请你作为日记倾听助手，结合这段日记内容来回答用户后续的所有提问，给予情感共鸣和建议：\n\n===日记开始===\n${systemContent}\n===日记结束===`,
+      role: "user", // 或者作为第一条隐形 user 消息
+      content: `以下是用户刚刚写完的日记内容。请你作为日记倾听助手，结合这段日记内容来回答用户后续的所有提问，给予情感共鸣和建议：\n\n===日记开始===\n标题：${systemTitle}\n 内容：${systemContent}\n===日记结束===`,
     });
   }
   // 请求 Go Gin 后端

@@ -3,9 +3,10 @@ from openai import OpenAI, AsyncOpenAI
 from typing import List
 from app.models import ChatMessage, ChatResponse
 from app.models.ai_platform import AiModelConf
-from app.providers.tools import tools
 import json
 import re
+from app.prompt.english_prompt import build_grammar_prompt
+from app.providers.tools import get_essay_analyze_tool, get_grammar_tool
 
 
 def _is_essay_result(data: dict) -> bool:
@@ -93,6 +94,22 @@ class CommonProviders(BaseProvider):
             base_url=config.auth_url,
         )
 
+    async def grammar_handler(self, content: str, **kwargs):
+        # 5. 💡 二次请求LLM，整理出错误单词语法以及坐标位置
+        grammar_messages = [{"role": "user", "content": build_grammar_prompt(content)}]
+        grammarRes = await self._async_client.chat.completions.create(
+            model=self.model,
+            messages=grammar_messages,  # 💡 使用清洗后的干净参数
+            stream=False,
+            top_p=0.8,
+            temperature=0.2,
+            reasoning_effort=kwargs.get("reasoning_effort", "low"),
+            tools=[get_grammar_tool()],
+            tool_choice={"type": "function", "function": {"name": "grammar_check"}},
+        )
+        print(grammarRes)
+        yield grammarRes
+
     async def _generate_stream(self, messages: List[ChatMessage], **kwargs):
         # 1. 💡 核心清洗：剔除前端传来的多余字段，只留下大模型要求的标准字段
         cleaned_messages = [
@@ -127,13 +144,14 @@ class CommonProviders(BaseProvider):
             # 4. 💡 定制核心：格式化为包含结构化数据的标准 SSE 字符串
             if content or reasoning_content:
                 payload = {
+                    "type": "content",
                     "data": content,
                     "reasoning": reasoning_content,  # 留作后续前端实现“思考折叠面板”的高级扩展
                 }
 
                 # 用 json.dumps 转换为标准字符串，并严格拼装 data: 前缀与双换行
                 yield f"{json.dumps(payload, ensure_ascii=False)}\n\n"
-
+        # yield (await self.grammar_handler(messages[0].content, **kwargs))
         # 5. 💡 定制流结束标识：向全链路（Go/Next.js）传递标准 DONE 信号
         yield "[DONE]\n\n"
 
@@ -145,7 +163,7 @@ class CommonProviders(BaseProvider):
             reasoning_effort=kwargs.get("reasoning_effort", "low"),
             top_p=0.8,
             temperature=0.2,
-            tools=tools,
+            tools=[get_essay_analyze_tool()],
             tool_choice={"type": "function", "function": {"name": "essay_analyze"}},
         )
         data = parse_essay_result(response)

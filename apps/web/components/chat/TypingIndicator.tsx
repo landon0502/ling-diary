@@ -19,11 +19,6 @@ function TypingIndicator({ className }: TypingIndicatorProps) {
       role="status"
       aria-label="AI 正在回复中"
     >
-      {/* AI 头像占位 */}
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
-        <span className="text-xs font-semibold text-primary">AI</span>
-      </div>
-
       {/* 弹跳圆点 */}
       <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-muted/80 px-4 py-3">
         <span

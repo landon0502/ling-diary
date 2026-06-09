@@ -6,13 +6,14 @@ import type { JSONContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { Button } from "@/components/ui/button";
 import { CircleCheck } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import MenusBar from "./MenusBar";
-import { AiMessage } from "./extensions/AiMessage";
+import { AiMessage, LanguageMarker } from "./extensions";
 import { toast } from "sonner";
+import FloatMenu from "./FloatMenu";
 
 import "./index.scss";
 
@@ -28,14 +29,26 @@ interface DiaryEditorProps {
   onSubmit: (data: DiaryData) => Promise<void> | void;
   onAfterSubmit?: () => Promise<void> | void;
   onUpdate?: (props: DiaryData) => void;
+  menubarRight?: Readonly<React.ReactNode>;
 }
 
 const AiEditor = forwardRef<{ editor: Editor | unknown }, DiaryEditorProps>(
-  ({ onSubmit, loading, onAfterSubmit, data: diaryCache, onUpdate }, ref) => {
+  (
+    {
+      onSubmit,
+      loading,
+      onAfterSubmit,
+      data: diaryCache,
+      onUpdate,
+      menubarRight,
+    },
+    ref
+  ) => {
     const editor = useEditor({
       extensions: [
         StarterKit,
         AiMessage,
+        LanguageMarker,
         Placeholder.configure({
           placeholder: "Write your diary here...",
         }),
@@ -79,22 +92,27 @@ const AiEditor = forwardRef<{ editor: Editor | unknown }, DiaryEditorProps>(
         <TooltipProvider>
           <div className="flex items-center justify-between gap-1 bg-muted/40 p-1 box-border">
             <MenusBar editor={editor} />
-            <div className="flex gap-2">
-              <ShimmerButton onClick={handleSubmit} className="shadow-2xl">
-                <span className="relative z-10 flex items-center justify-center gap-2 text-center text-sm leading-none font-medium tracking-tight whitespace-pre-wrap text-white  dark:from-white dark:to-slate-900/10">
-                  {loading ? (
-                    <>
-                      提交中
-                      <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    </>
-                  ) : (
-                    <>
-                      提交
-                      <CircleCheck className="w-4 h-4 group-hover:scale-125 transition-transform" />
-                    </>
-                  )}
-                </span>
-              </ShimmerButton>
+            <div className="flex gap-2 h-full">
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 text-base px-4 h-12 rounded-xl border-primary/30 hover:bg-primary/10"
+                onClick={handleSubmit}
+              >
+                {loading ? (
+                  <>
+                    提交中
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    提交
+                    <CircleCheck className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                  </>
+                )}
+              </Button>
+
+              {menubarRight}
             </div>
           </div>
         </TooltipProvider>
@@ -115,6 +133,7 @@ const AiEditor = forwardRef<{ editor: Editor | unknown }, DiaryEditorProps>(
           </div>
           <div className="absolute top-12 left-0 bottom-0 right-0 py-2 px-4 overflow-y-scroll scrollbar-hide">
             <EditorContent editor={editor} className="w-full" />
+            <FloatMenu editor={editor} />
           </div>
         </div>
         <style jsx>

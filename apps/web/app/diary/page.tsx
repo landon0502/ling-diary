@@ -7,7 +7,13 @@ import { AiChat } from "@/components/chat";
 import { useLocalStorageState } from "ahooks";
 import { createContext } from "react";
 import { SetState } from "ahooks/lib/createUseStorageState";
-
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Brain, ChevronsRight } from "lucide-react";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 export const DiaryContext = createContext<{
   diaryData?: DiaryData;
   setDiaryData?: (this: unknown, value: SetState<DiaryData>) => void;
@@ -25,11 +31,11 @@ export default function DiaryPage() {
 
   const handleSubmit = async (data: DiaryData) => {
     if (!data.title) {
-      toast.info("请编写日记标题");
+      toast.info("请编写日记标题", { position: "top-center" });
       return;
     }
     if (!data.content) {
-      toast.info("请编写日记内容");
+      toast.info("请编写日记内容", { position: "top-center" });
       return;
     }
     await submitDiaryContent({
@@ -64,20 +70,35 @@ export default function DiaryPage() {
       }}
     >
       <div className="h-full">
-        <div className="flex flex-row h-full relative">
-          <div className="flex-1">
-            <AiEditor
-              data={diaryData}
-              loading={loading}
-              onSubmit={handleSubmit}
-              onAfterSubmit={onAfterSubmit}
-              onUpdate={onChange}
-            />
+        <Collapsible asChild>
+          <div className="flex flex-row h-full relative">
+            <div className="flex-1">
+              <AiEditor
+                data={diaryData}
+                loading={loading}
+                onSubmit={handleSubmit}
+                onAfterSubmit={onAfterSubmit}
+                onUpdate={onChange}
+                menubarRight={
+                  <CollapsibleTrigger asChild>
+                    <ShimmerButton className="group px-3">
+                      <Brain className="group-data-[state=open]:hidden" />
+                      <ChevronsRight className="hidden group-data-[state=open]:block" />
+                    </ShimmerButton>
+                  </CollapsibleTrigger>
+                }
+              />
+            </div>
+            <CollapsibleContent asChild>
+              <div className="w-110 h-full border-l">
+                <AiChat
+                  systemContent={diaryData.content}
+                  systemTitle={diaryData.title}
+                />
+              </div>
+            </CollapsibleContent>
           </div>
-          <div className="w-110 h-full border-l">
-            <AiChat systemContent={diaryData.content} />
-          </div>
-        </div>
+        </Collapsible>
       </div>
     </DiaryContext>
   );

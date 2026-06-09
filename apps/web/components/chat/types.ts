@@ -30,6 +30,7 @@ export interface PresetPrompt {
 
 /** AiChat 组件对外 Props */
 export interface AiChatProps {
+  systemTitle?: string;
   systemContent?: string;
   /** 初始消息列表 */
   initialMessages?: Message[];

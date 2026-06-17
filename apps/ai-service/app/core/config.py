@@ -2,23 +2,24 @@
 全局配置模块 —— 统一管理所有环境变量和应用常量。
 通过环境变量注入，支持开发/生产环境切换。
 """
+
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=".env.example")
 
 
 class Settings:
     # ========== 应用基础 ==========
     APP_NAME: str = "ai-service"
-    APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
-    APP_PORT: int = int(os.getenv("APP_PORT", "8001"))
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    APP_HOST: str = os.getenv("APP_HOST")
+    APP_PORT: int = int(os.getenv("APP_PORT"))
+    DEBUG: bool = os.getenv("DEBUG").lower() == "true"
 
     # ========== CORS ==========
-    CORS_ORIGINS: list[str] = os.getenv(
-        "CORS_ORIGINS", "http://localhost:3000"
-    ).split(",")
+    CORS_ORIGINS: list[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(
+        ","
+    )
 
     # ========== MySQL（SQLAlchemy async） ==========
     DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
@@ -55,7 +56,9 @@ class Settings:
     DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
     ZAI_API_KEY: str = os.getenv("ZAI_API_KEY", "")
-    ZAI_BASE_URL: str = os.getenv("ZAI_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/")
+    ZAI_BASE_URL: str = os.getenv(
+        "ZAI_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/"
+    )
 
     # ========== 日志 ==========
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

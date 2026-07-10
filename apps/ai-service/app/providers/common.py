@@ -1,12 +1,23 @@
-from app.providers.base import BaseProvider
-from openai import OpenAI, AsyncOpenAI
-from typing import List
-from app.models import ChatMessage, ChatResponse
-from app.models.ai_platform import AiModelConf
+"""
+通用 Provider —— 基于 LangChain ChatOpenAI 封装 OpenAI 兼容接口。
+支持流式对话（SSE）与非流式结构化输出（作文批改）。
+兼容 DeepSeek-R1 等深度思考模型的 reasoning_content。
+"""
+
 import json
 import re
-from app.prompt.english_prompt import build_grammar_prompt
+from typing import List
+
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import AIMessage
+
+from app.providers.base import BaseProvider
 from app.providers.tools import get_essay_analyze_tool, get_grammar_tool
+from app.models import ChatMessage, ChatResponse
+from app.models.ai_platform import AiModelConf
+from app.prompt.english_prompt import build_grammar_prompt
+
+# ===== 工具函数 =====
 
 
 def _is_essay_result(data: dict) -> bool:
@@ -46,19 +57,20 @@ def _try_extract_json(text: str) -> dict | None:
     return None
 
 
-def parse_essay_result(response):
-    """解析模型返回的 essay_analyze 结果，兼容 tool_calls 在 content 中的场景"""
-    message = response.choices[0].message
-
-    # 标准路径：message.tool_calls 有值
-    if message.tool_calls:
-        tool_call = message.tool_calls[0]
-        if tool_call.function.name != "essay_analyze":
+def parse_essay_result(response: AIMessage) -> dict:
+    """解析 LangChain AIMessage 中的 essay_analyze 结果，兼容 tool_calls 在 content 中的场景"""
+    # 标准路径：AIMessage.tool_calls 有值（LangChain 格式）
+    if response.tool_calls:
+        tool_call = response.tool_calls[0]
+        if tool_call["name"] != "essay_analyze":
             raise Exception("返回了错误的工具")
-        return json.loads(tool_call.function.arguments)
+        # LangChain 的 tool_calls args 已经是 dict
+        return tool_call["args"]
 
     # 兼容路径：部分大模型把 tool_calls 放在 content 中返回
-    content = message.content or ""
+    content = response.content or ""
+    if isinstance(content, list):
+        content = "".join(str(c) for c in content)
 
     if content:
         result = _try_extract_json(content)
@@ -78,97 +90,120 @@ def parse_essay_result(response):
     raise Exception("模型未返回tool调用")
 
 
+# ===== Provider =====
+
+
 class CommonProviders(BaseProvider):
+    """
+    通用 Provider，基于 LangChain 的 init_chat_model 初始化。
+    自动适配 OpenAI / DeepSeek / 智谱 等 OpenAI 兼容 API。
+    """
 
     def __init__(self, config: AiModelConf):
         self.model = config.model
         self.auth_url = config.auth_url
         self.name = config.provider
         self.api_key = config.api_key
-        self._client = OpenAI(
+
+        # 使用 LangChain 的 init_chat_model 统一初始化
+        # model 格式 "openai:xxx" 会自动委托给 langchain-openai 的 ChatOpenAI
+        self._chat_model = init_chat_model(
+            model=f"openai:{config.model}",
             api_key=config.api_key,
             base_url=config.auth_url,
         )
-        self._async_client = AsyncOpenAI(
-            api_key=config.api_key,
-            base_url=config.auth_url,
-        )
+
+    # ===== 公开方法实现 =====
 
     async def grammar_handler(self, content: str, **kwargs):
-        # 5. 💡 二次请求LLM，整理出错误单词语法以及坐标位置
+        """二次请求 LLM，进行语法检查（非流式）"""
         grammar_messages = [{"role": "user", "content": build_grammar_prompt(content)}]
-        grammarRes = await self._async_client.chat.completions.create(
-            model=self.model,
-            messages=grammar_messages,  # 💡 使用清洗后的干净参数
-            stream=False,
-            top_p=0.8,
-            temperature=0.2,
-            reasoning_effort=kwargs.get("reasoning_effort", "low"),
-            tools=[get_grammar_tool()],
-            tool_choice={"type": "function", "function": {"name": "grammar_check"}},
+
+        llm_with_tools = self._chat_model.bind_tools(
+            [get_grammar_tool()],
+            tool_choice="grammar_check",
         )
-        print(grammarRes)
-        yield grammarRes
+
+        response = await llm_with_tools.ainvoke(
+            grammar_messages,
+            temperature=0.2,
+            top_p=0.8,
+            reasoning_effort=kwargs.get("reasoning_effort", "low"),
+        )
+        print(response)
+        yield response
 
     async def _generate_stream(self, messages: List[ChatMessage], **kwargs):
-        # 1. 💡 核心清洗：剔除前端传来的多余字段，只留下大模型要求的标准字段
+        # 1. 核心清洗：剔除前端传来的多余字段，只留下标准字段
         cleaned_messages = [
             {"role": msg.role, "content": msg.content} for msg in messages
         ]
 
-        # 2. 💡 修正致命错误：必须在前面加上 await 激活异步流对象
-        response = await self._async_client.chat.completions.create(
-            model=self.model,
-            messages=cleaned_messages,  # 💡 使用清洗后的干净参数
-            stream=True,
-            reasoning_effort=kwargs.get("reasoning_effort", "high"),
-            top_p=0.8,
+        # 2. 使用 LangChain astream 进行流式调用
+        #    reasoning_effort 等 model_kwargs 会透传给底层 ChatOpenAI → OpenAI API
+        stream = self._chat_model.astream(
+            cleaned_messages,
             temperature=0.2,
+            top_p=0.8,
+            reasoning_effort=kwargs.get("reasoning_effort", "high"),
         )
 
-        # 3. 💡 修正运行错误：遍历异步流必须使用 async for
-        async for chunk in response:
-            if not chunk.choices:
-                continue
-
-            delta = chunk.choices[0].delta
+        # 3. 遍历 LangChain AIMessageChunk 流
+        async for chunk in stream:
             content = ""
             reasoning_content = ""
 
-            # 💡 进阶定制：完美兼容深度思考模型（如 o1, o3-mini, DeepSeek-R1）
-            if hasattr(delta, "reasoning_content") and delta.reasoning_content:
-                reasoning_content = delta.reasoning_content
-            elif hasattr(delta, "content") and delta.content:
-                content = delta.content
+            # AIMessageChunk.content 可能是 str 或 list
+            if isinstance(chunk.content, str) and chunk.content:
+                content = chunk.content
 
-            # 4. 💡 定制核心：格式化为包含结构化数据的标准 SSE 字符串
+            # 深度思考模型的 reasoning_content 存放在 additional_kwargs 中
+            if chunk.additional_kwargs:
+                reasoning_content = chunk.additional_kwargs.get("reasoning_content", "")
+
+            # 也检查 response_metadata（部分版本存放位置不同）
+            if not reasoning_content and chunk.response_metadata:
+                reasoning_content = chunk.response_metadata.get("reasoning_content", "")
+
+            # 4. 格式化为与旧实现完全一致的 SSE 字符串
             if content or reasoning_content:
                 payload = {
                     "type": "content",
                     "data": content,
-                    "reasoning": reasoning_content,  # 留作后续前端实现“思考折叠面板”的高级扩展
+                    "reasoning": reasoning_content,
                 }
-
-                # 用 json.dumps 转换为标准字符串，并严格拼装 data: 前缀与双换行
                 yield f"{json.dumps(payload, ensure_ascii=False)}\n\n"
-        # yield (await self.grammar_handler(messages[0].content, **kwargs))
-        # 5. 💡 定制流结束标识：向全链路（Go/Next.js）传递标准 DONE 信号
+
+        # 5. 流结束标识
         yield "[DONE]\n\n"
 
     async def _generate(self, messages, **kwargs):
-        response = await self._client.chat.completions.create(
-            model=self.model,
-            messages=[message.model_dump() for message in messages],
-            stream=False,
-            reasoning_effort=kwargs.get("reasoning_effort", "low"),
-            top_p=0.8,
-            temperature=0.2,
-            tools=[get_essay_analyze_tool()],
-            tool_choice={"type": "function", "function": {"name": "essay_analyze"}},
+        # 绑定 essay_analyze tool 并强制调用
+        llm_with_tools = self._chat_model.bind_tools(
+            [get_essay_analyze_tool()],
+            tool_choice="essay_analyze",
         )
+
+        # 使用 LangChain ainvoke 进行非流式调用
+        response: AIMessage = await llm_with_tools.ainvoke(
+            [message.model_dump() for message in messages],
+            temperature=0.2,
+            top_p=0.8,
+            reasoning_effort=kwargs.get("reasoning_effort", "low"),
+        )
+
         data = parse_essay_result(response)
+
+        # 提取 usage 信息，兼容 LangChain 不同版本
+        usage = response.response_metadata.get("token_usage", {})
+        if not usage:
+            # 兼容 usage_metadata（较新 LangChain 版本）
+            um = getattr(response, "usage_metadata", None) or {}
+            if um:
+                usage = dict(um)
+
         return ChatResponse(
             content=data,
-            model=response.model,
-            usage=response.usage.model_dump() if response.usage else None,
+            model=response.response_metadata.get("model_name", ""),
+            usage=usage,
         )

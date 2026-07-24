@@ -3,3 +3,9 @@ node_modules
 .claude
 __pycache__
 .venv
+.agent
+.agents
+.codegraph
+.comet
+AGENTS.md
+CLAUDE.md

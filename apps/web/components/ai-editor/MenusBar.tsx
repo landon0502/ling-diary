@@ -157,6 +157,19 @@ export default function MenusBar({
       isActive: false,
       disabled: !editorState?.canRedo,
     },
+    {
+      icon: Redo2,
+      label: "标注",
+      action: () =>
+        editor
+          .chain()
+          .focus()
+          .setMark("comment", {
+            commentId: "cmt_001",
+          })
+          .run(),
+      isActive: false,
+    },
   ];
   return (
     <div className="flex items-center gap-1">

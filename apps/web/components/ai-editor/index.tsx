@@ -11,7 +11,7 @@ import { CircleCheck } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import MenusBar from "./MenusBar";
-import { AiMessage, LanguageMarker } from "./extensions";
+import { AiMessage, LanguageMarker, CommentMarker } from "./extensions";
 import { toast } from "sonner";
 import FloatMenu from "./FloatMenu";
 
@@ -49,6 +49,7 @@ const AiEditor = forwardRef<{ editor: Editor | unknown }, DiaryEditorProps>(
         StarterKit,
         AiMessage,
         LanguageMarker,
+        CommentMarker,
         Placeholder.configure({
           placeholder: "Write your diary here...",
         }),
